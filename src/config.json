@@ -1,0 +1,5 @@
+{
+  "name": "contribution-mate",
+  "description": "Contribution Mate is a GitHub CLI extension that allows you to safely synchronize your commit history of non-GitHub repositories with your GitHub account without fear of exposing the source code.",
+  "version": "0.1.0"
+}
