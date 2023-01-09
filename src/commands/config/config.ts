@@ -62,7 +62,6 @@ export const config = async () => {
     },
   ]);
 
-  console.log(userPrompt);
   const userDataJson = JSON.stringify(userPrompt, null, 2);
   const userDataString = userDataJson.toString();
   const encoder = new TextEncoder();
