@@ -10,20 +10,21 @@ export const fileExists = async (file: string): Promise<boolean> => {
   }
 };
 
-export async function runCli(params: string) {
-  const props = params.split(" ");
-
+export const tryDecode = async (params: string[]) => {
   const process = Deno.run({
-    cmd: props,
+    cmd: params,
     stdout: "piped",
     stderr: "piped",
   });
-
   const { code } = await process.status();
-  if (code === 0) {
-    return new TextDecoder().decode(await process.output()).trim();
-  } else {
+
+  if (code !== 0) {
     const error = new TextDecoder().decode(await process.stderrOutput());
-    console.error(error);
+    console.error(
+      `[%cERROR%c] Process failed with an error: ${error}`,
+      "color: red",
+      "color: inherit",
+    );
   }
-}
+  return new TextDecoder().decode(await process.output()).toString().trim();
+};

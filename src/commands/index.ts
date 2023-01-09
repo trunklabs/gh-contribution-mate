@@ -1,1 +1,1 @@
-export * from "./config.command.ts";
+export * from "./config/index.ts";
