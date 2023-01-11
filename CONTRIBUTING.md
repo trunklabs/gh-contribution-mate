@@ -12,9 +12,16 @@
 1. Install Deno following the [official documentation][deno-install] if not
    installed.
 2. Run `deno cache --reload --lock=deno.lock src/main.ts` to cache dependencies.
-3. Optionally setup your editor/IDE following the
-   [official documentation][deno-env]. If you don't setup automatic formatting,
-   please run `deno fmt` before committing your changes.
+3. Install Velociraptor following the [official documentation][vr-install] if
+   not installed.
+4. Optionally setup your editor/IDE following the
+   [official documentation][deno-env].
+
+To view all available scripts:
+
+```bash
+vr
+```
 
 ## Submitting a Pull Request (PR)
 
@@ -44,20 +51,25 @@ rules with [deno fmt][deno-fmt], and lint with [deno lint][deno-lint].
 ## Commit Message Guidelines
 
 We are following [Conventional Commits][conventional-commits] convention to
-format commit messages.
+format commit messages. Commits are automatically linted with
+[commitlint][commitlint] using
+[config-conventional][commitlint-config-conventional] rules.
 
-Following types available:
+Following types ara available:
 
-- feat: A new feature
-- fix: A bug fix
-- docs: Documentation only changes
-- style: Changes that do not affect the meaning of the code (white-space,
-  formatting, missing semi-colons, etc)
-- refactor: A code change that neither fixes a bug nor adds a feature
-- perf: A code change that improves performance
-- test: Adding missing tests
+- build: Changes that affect the build system or external dependencies
 - chore: Changes to the build process or auxiliary tools and libraries such as
   documentation generation
+- ci: Changes to the CI configuration files and scripts
+- docs: Documentation only changes
+- feat: A new feature
+- fix: A bug fix
+- perf: A code change that improves performance
+- refactor: A code change that neither fixes a bug nor adds a feature
+- revert: Revert of a previous commit
+- style: Changes that do not affect the meaning of the code (white-space,
+  formatting, missing semi-colons, etc)
+- test: Adding missing tests or correcting existing tests
 
 [deno-install]: https://deno.land/manual@v1.29.1/getting_started/installation
 [deno-env]: https://deno.land/manual@v1.29.1/getting_started/setup_your_environment
@@ -65,3 +77,6 @@ Following types available:
 [deno-fmt]: https://deno.land/manual@v1.29.1/tools/formatter
 [deno-lint]: https://deno.land/manual@v1.29.1/tools/linter
 [conventional-commits]: https://www.conventionalcommits.org/en/v1.0.0/
+[commitlint]: https://github.com/conventional-changelog/commitlint
+[commitlint-config-conventional]: https://github.com/conventional-changelog/commitlint/tree/master/%40commitlint/config-conventional
+[vr-install]: https://velociraptor.run/docs/installation/
