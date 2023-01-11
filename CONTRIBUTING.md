@@ -55,7 +55,7 @@ format commit messages. Commits are automatically linted with
 [commitlint][commitlint] using
 [config-conventional][commitlint-config-conventional] rules.
 
-Following types ara available:
+Following types are available:
 
 - build: Changes that affect the build system or external dependencies
 - chore: Changes to the build process or auxiliary tools and libraries such as
