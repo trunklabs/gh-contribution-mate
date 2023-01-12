@@ -1,3 +1,5 @@
+import { ensureFile } from "../deps.ts";
+
 export const fileExists = async (file: string): Promise<boolean> => {
   try {
     await Deno.stat(file);
@@ -34,4 +36,13 @@ export const tryDecode = async (params: string[], options?: DecodeParams) => {
   }
 
   return new TextDecoder().decode(await process.output()).toString().trim();
+};
+
+export const createFile = async (data, path: string) => {
+  const userDataJson = JSON.stringify(data, null, 2);
+  const userDataString = userDataJson.toString();
+  const encoder = new TextEncoder();
+  const encodedUser = encoder.encode(userDataString);
+  await ensureFile(path);
+  await Deno.writeFile(path, encodedUser);
 };
