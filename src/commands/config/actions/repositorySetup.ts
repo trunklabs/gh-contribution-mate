@@ -11,13 +11,21 @@ export const repositorySetup = async ({ repository }, next) => {
 
   if (isRepoExists) {
     const confirmedRepoCreation = await Toggle.prompt(
-      `We found this repository in your library, do you want to use "${repository}" repository for synchronization?`,
+      {
+        message:
+          `We found this repository in your library, do you want to use "${repository}" repository for synchronization?`,
+        default: true,
+      },
     );
     return confirmedRepoCreation ? await next() : await next("repository");
   }
 
   const createNewRepoConfirm = await Toggle.prompt(
-    `We are about to create "${repository}" repository, check if the name looks correct?`,
+    {
+      message:
+        `We are about to create "${repository}" repository, check if the name looks correct?`,
+      default: true,
+    },
   );
 
   if (createNewRepoConfirm) {
