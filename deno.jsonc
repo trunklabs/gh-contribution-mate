@@ -1,6 +1,0 @@
-{
-  "tasks": {
-    "dev": "deno run --watch src/main.ts",
-    "compile": "deno run --allow-run=deno script/compile.ts"
-  }
-}

@@ -1,0 +1,20 @@
+scripts:
+  dev:
+    desc: Start the development mode
+    cmd: deno run --watch src/main.ts
+  compile:
+    desc: Compile the project to a single executable
+    cmd: deno run --allow-run=deno script/compile.ts
+  pre-commit:
+    desc: Git Hook for pre-commit (don't run manually)
+    cmd:
+      - deno lint
+      - deno fmt
+    gitHook: pre-commit
+  commit-msg:
+    desc: Git Hook for commit-msg (don't run manually)
+    cmd: deno run script/commitlint.ts ${GIT_ARGS[1]}
+    allow:
+      read: true
+      env: READABLE_STREAM,Q_DEBUG,OSTYPE,FORCE_COLOR,TERM,CI,TEAMCITY_VERSION,COLORTERM,TERM_PROGRAM
+    gitHook: commit-msg
