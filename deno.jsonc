@@ -1,0 +1,16 @@
+{
+  "importMap": "import_map.json",
+  "lint": {
+    "files": {
+      "exclude": ["dist"]
+    }
+  },
+  "fmt": {
+    "files": {
+      "exclude": ["dist"]
+    },
+    "options": {
+      "singleQuote": true
+    }
+  }
+}
