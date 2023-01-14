@@ -1,4 +1,18 @@
 {
+  "importMap": "import_map.json",
+  "lint": {
+    "files": {
+      "exclude": ["dist"]
+    }
+  },
+  "fmt": {
+    "files": {
+      "exclude": ["dist"]
+    },
+    "options": {
+      "singleQuote": true
+    }
+  },
   "tasks": {
     "dev": "deno run --allow-read --allow-write --allow-env --allow-run src/main.ts",
     "compile": "deno run --allow-run=deno script/compile.ts"

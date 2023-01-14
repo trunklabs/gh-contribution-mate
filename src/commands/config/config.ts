@@ -1,64 +1,125 @@
-import { dir, Input, prompt } from "../../deps.ts";
+import { Input, prompt, Toggle } from 'cliffy';
 import {
-  createFile,
-  fileExists,
-  isNotEmpty,
-  tryDecode,
-} from "../../utils/index.ts";
-import { nameSetup, repositorySetup } from "./actions/index.ts";
+  compose,
+  endsWith,
+  equals,
+  ifElse,
+  isEmpty,
+  not,
+  pipe,
+  when,
+} from 'rambda';
+import {
+  createRepository,
+  getRepository,
+  RepositoryError,
+} from 'models/repository';
+import {
+  type AuthorLike,
+  type ConfigLike,
+  getAuthor,
+  getConfigPath,
+  notifyConfigExists,
+  writeConfig,
+} from 'models/config';
+import { getGitAuthor, type GitAuthorLike } from 'models/git';
+import { exists, sanitizeString } from 'utils';
 
-export const config = async () => {
-  const rootDir = dir("config");
-  const userConfig = `${rootDir}/contribution-mate/user.json`;
+export async function configAction(): Promise<void> {
+  const configured: boolean = await exists(getConfigPath());
+  const _defaultAuthor: AuthorLike | GitAuthorLike = await ifElse(
+    equals(true),
+    pipe(notifyConfigExists, getAuthor),
+    getGitAuthor,
+  )(configured);
 
-  const isFileCreated = await fileExists(userConfig);
-
-  const userName = await tryDecode([
-    "git",
-    "config",
-    "--global",
-    "user.name",
-  ]);
-  const userEmail = await tryDecode([
-    "git",
-    "config",
-    "--global",
-    "user.email",
-  ]);
-
-  const userPrompt = await prompt([
+  const result = await prompt([
     {
-      name: "name",
-      message: "Default commit author:",
+      type: Input,
+      name: 'name',
+      message: 'Default commit author name:',
+      hint: 'Different authors can be configured per repository later on.',
+      transform: sanitizeString,
+      validate: compose(not, isEmpty, sanitizeString),
+      default: _defaultAuthor.name,
+    },
+    {
+      type: Input,
+      name: 'email',
+      message: 'Default commit author email:',
+      hint: 'Different emails can be configured per repository later on.',
+      transform: sanitizeString,
+      validate: compose(not, isEmpty, sanitizeString),
+      default: _defaultAuthor.email,
+      after: async ({ email }, next) => {
+        when<string, void>(
+          compose(not, endsWith('@users.noreply.github.com')),
+          notifyEmailLeak,
+        )(email ?? '');
+        await next();
+      },
+    },
+    {
+      type: Input,
+      name: 'repository',
+      message: 'Base repository for synchorization:',
       hint:
-        "you will have the option to use a different name per repository (when you connect one)",
-      type: Input,
-      validate: (value) => isNotEmpty(value),
-      default: userName,
-      before: (_, next) => nameSetup(userName, userEmail, isFileCreated, next),
-    },
+        'If you already have a repository on GitHub that you use for synchorization, you can type it here, otherwise we will create a new one for you.',
+      transform: sanitizeString,
+      validate: compose(not, isEmpty, sanitizeString),
+      default: 'contribution-mate-sync',
+      after: async (opts, next) => {
+        try {
+          const repository = await getRepository({
+            name: opts.repository ?? '',
+          });
+          const confirmed = await Toggle.prompt({
+            message: `You already have a ${
+              repository.isPrivate ? 'private' : 'public'
+            } repository named "${repository.name}", use it for synchronization?`,
+            default: false,
+          });
 
-    {
-      name: "email",
-      message: "Default commit author's email:",
-      hint:
-        "you will have the option to use a different email address per repository (when you connect one)",
-      type: Input,
-      validate: (value) => isNotEmpty(value),
-      default: userEmail,
-    },
+          if (!confirmed) return await next('repository');
+          return await next();
+        } catch (err) {
+          if (!(err instanceof RepositoryError)) {
+            console.error(err);
+            Deno.exit(1);
+          }
 
-    {
-      name: "repository",
-      message: "Default repository name:",
-      type: Input,
-      validate: (value) => isNotEmpty(value),
-      default: "contribution-mate-sync",
-      after: (opts, next) => repositorySetup(opts, next),
+          const confirmed = await Toggle.prompt({
+            message:
+              `You don't have a repository named "${opts.repository}", create one?`,
+            default: false,
+          });
+
+          if (!confirmed) return await next('repository');
+
+          const repository = await createRepository({
+            name: opts.repository ?? '',
+          });
+
+          console.log(
+            `Your new sync repository is available here:\n${repository.url}`,
+          );
+        }
+      },
     },
   ]);
 
-  await createFile(userPrompt, userConfig);
+  await writeConfig(result as ConfigLike);
 
-  console.log("Done ✨");
-};
+  console.log('Done ✨');
+}
+
+/**
+ * TODO: Implement
+ * Use ansi/tty for this.
+ * And actually we should ansi/tty for all console logs.
+ */
+function notifyEmailLeak() {
+  console.log(
+    'Your email address might be leaked, advised to use GitHub no-reply',
+  );
+}
