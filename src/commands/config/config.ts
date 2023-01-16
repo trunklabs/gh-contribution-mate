@@ -29,7 +29,7 @@ export async function configAction(): Promise<void> {
   const configured: boolean = await exists(getConfigPath());
   const _defaultAuthor: AuthorLike | GitAuthorLike = await ifElse(
     equals(true),
-    pipe(notifyConfigExists, getAuthor),
+    pipe(notifyConfigExists, promptConfigUpdate, updateConfigOrExit),
     getGitAuthor,
   )(configured);
 
@@ -111,6 +111,23 @@ export async function configAction(): Promise<void> {
   await writeConfig(result as ConfigLike);
 
   console.log('Done ✨');
+}
+
+function promptConfigUpdate(): Promise<boolean> {
+  return Toggle.prompt({
+    message: 'Would you like to make changes to your configuration?',
+    default: false,
+  });
+}
+
+async function updateConfigOrExit(
+  confirmed: Promise<boolean>,
+): Promise<AuthorLike> | never {
+  return ifElse(
+    equals(true),
+    getAuthor,
+    (): never => Deno.exit(0),
+  )(await confirmed);
 }
 
 /**
