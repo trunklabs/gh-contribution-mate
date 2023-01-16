@@ -16,6 +16,8 @@
    not installed.
 4. Optionally setup your editor/IDE following the
    [official documentation][deno-env].
+5. Optionally run `deno cache --reload --lock=deno.lock script/commitlint.ts` to
+   cache commit linter's dependencies.
 
 To view all available scripts:
 
@@ -37,6 +39,11 @@ Before you submit your Pull Request (PR) consider the following guidelines:
   [code style guidelines](#code-style-guidelines).
 - Commit your changes following our
   [commit message guidelines](#commit-message-guidelines).
+  > Before committing we recommend running the following command to cache commit
+  > linter's dependencies.
+  > ```bash
+  > deno cache --reload --lock=deno.lock script/commitlint.ts
+  > ```
 - Push your changes to GitHUb:
   ```bash
   git push origin feature-branch

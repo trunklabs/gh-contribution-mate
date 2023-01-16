@@ -1,4 +1,5 @@
 import { join } from 'std/path';
+import { colors } from 'cliffy';
 import { default as dir } from 'dir';
 
 /**
@@ -58,11 +59,11 @@ export async function getAuthor(): Promise<AuthorLike> {
   return { name, email };
 }
 
-/**
- * TODO: Implement
- */
 export function notifyConfigExists() {
-  console.log('Config already exists');
+  console.log(
+    colors.green('\xa0\u2713'),
+    colors.green('You have already configured contribution-mate!'),
+  );
 }
 
 /**
