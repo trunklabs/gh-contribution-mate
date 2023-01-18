@@ -1,4 +1,5 @@
-import { Input, prompt, Toggle } from 'cliffy';
+import { ansi, colors, Input, prompt, Toggle } from 'cliffy';
+import { EOL } from 'std/fs';
 import {
   compose,
   endsWith,
@@ -130,13 +131,24 @@ async function updateConfigOrExit(
   )(await confirmed);
 }
 
-/**
- * TODO: Implement
- * Use ansi/tty for this.
- * And actually we should ansi/tty for all console logs.
- */
 function notifyEmailLeak() {
   console.log(
-    'Your email address might be leaked, advised to use GitHub no-reply',
+    colors.yellow('\xa0!'),
+    colors.yellow(
+      'It looks like you are using your personal email address for commits authoring.',
+    ),
+    EOL.LF,
+    '\xa0',
+    colors.yellow('We encourage you to configure the'),
+    ansi.link(
+      'GitHub no-reply',
+      'https://docs.github.com/en/account-and-profile/setting-up-and-managing-your-personal-account-on-github/managing-email-preferences/setting-your-commit-email-address',
+    ).toString(),
+    colors.yellow('email address instead.'),
+    EOL.LF,
+    '\xa0',
+    colors.yellow(
+      'This will avoid the potential leaking of your email address.',
+    ),
   );
 }
