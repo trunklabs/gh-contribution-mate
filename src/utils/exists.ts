@@ -1,7 +1,7 @@
 /**
  * Will check if a file or directory exists.
  */
-export const exists = async (path: string): Promise<boolean> => {
+export async function exists(path: string): Promise<boolean> {
   try {
     await Deno.stat(path);
     return true;
@@ -11,4 +11,4 @@ export const exists = async (path: string): Promise<boolean> => {
     }
     throw e;
   }
-};
+}
