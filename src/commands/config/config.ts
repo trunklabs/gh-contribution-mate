@@ -63,9 +63,9 @@ export async function configAction(): Promise<void> {
     {
       type: Input,
       name: 'repository',
-      message: 'Base repository for synchorization:',
+      message: 'Base repository for synchronization:',
       hint:
-        'If you already have a repository on GitHub that you use for synchorization, you can type it here, otherwise we will create a new one for you.',
+        'If you already have a repository on GitHub that you use for synchronization, you can type it here, otherwise we will create a new one for you.',
       transform: sanitizeString,
       validate: compose(not, isEmpty, sanitizeString),
       default: 'contribution-mate-sync',
