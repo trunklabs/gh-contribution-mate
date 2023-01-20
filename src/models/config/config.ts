@@ -1,6 +1,7 @@
 import { join } from 'std/path';
 import { colors } from 'cliffy';
 import { default as dir } from 'dir';
+import { z } from 'zod';
 
 /**
  * TODO: Improve
@@ -17,6 +18,12 @@ export type ConfigLike = {
   email: string;
   repository: string;
 };
+
+export const ConfigSchema = z.object({
+  name: z.string(),
+  email: z.string(),
+  repository: z.string(),
+});
 
 export function getConfigDir() {
   const base = 'contribution-mate';
@@ -38,16 +45,20 @@ export function getConfigPath() {
   return join(getConfigDir(), 'config.json');
 }
 
-/**
- * TODO: Implement
- * Read config from the disk and parse to JSON.
- */
 export async function getConfig(): Promise<ConfigLike> {
-  return await Promise.resolve({
-    name: 'contribution-mate-demo',
-    email: 'demo@contribuion.mate',
-    repository: 'contribution-mate-sync',
-  });
+  try {
+    const data = JSON.parse(await Deno.readTextFile(getConfigPath()));
+    const config = ConfigSchema.parse(data);
+    return config;
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      const { fieldErrors } = err.flatten();
+      console.log(fieldErrors); // todo: ask what we want to do with it?
+    }
+
+    console.error(err);
+    Deno.exit(1);
+  }
 }
 
 /**
