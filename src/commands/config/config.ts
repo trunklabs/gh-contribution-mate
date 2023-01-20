@@ -19,6 +19,7 @@ import {
   type AuthorLike,
   type ConfigLike,
   getAuthor,
+  getConfig,
   getConfigPath,
   notifyConfigExists,
   writeConfig,
@@ -32,6 +33,14 @@ export async function configAction(): Promise<void> {
     equals(true),
     pipe(notifyConfigExists, promptConfigUpdate, updateConfigOrExit),
     getGitAuthor,
+  )(configured);
+
+  const _defaultRepo: Partial<ConfigLike> = await ifElse(
+    equals(true),
+    getConfig,
+    function () {
+      return { repository: 'contribution-mate-sync' };
+    },
   )(configured);
 
   const result = await prompt([
@@ -68,7 +77,7 @@ export async function configAction(): Promise<void> {
         'If you already have a repository on GitHub that you use for synchronization, you can type it here, otherwise we will create a new one for you.',
       transform: sanitizeString,
       validate: compose(not, isEmpty, sanitizeString),
-      default: 'contribution-mate-sync',
+      default: _defaultRepo.repository,
       after: async (opts, next) => {
         try {
           const repository = await getRepository({
