@@ -19,7 +19,7 @@ export type ConfigLike = {
   repository: string;
 };
 
-export const ConfigSchema = z.object({
+export const configSchema = z.object({
   name: z.string(),
   email: z.string(),
   repository: z.string(),
@@ -46,19 +46,9 @@ export function getConfigPath() {
 }
 
 export async function getConfig(): Promise<ConfigLike> {
-  try {
-    const data = JSON.parse(await Deno.readTextFile(getConfigPath()));
-    const config = ConfigSchema.parse(data);
-    return config;
-  } catch (err) {
-    if (err instanceof z.ZodError) {
-      const { fieldErrors } = err.flatten();
-      console.log(fieldErrors); // todo: ask what we want to do with it?
-    }
-
-    console.error(err);
-    Deno.exit(1);
-  }
+  const data = JSON.parse(await Deno.readTextFile(getConfigPath()));
+  const config = configSchema.parse(data);
+  return config;
 }
 
 /**
