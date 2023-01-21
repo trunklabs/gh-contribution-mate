@@ -100,7 +100,7 @@ export async function configAction(): Promise<void> {
 
           const confirmed = await Toggle.prompt({
             message:
-              `You don't have a repository named "${opts.repository}", create one?`,
+              `You don't have a repository named "${opts.repository}", create it?`,
             default: false,
           });
 
@@ -111,7 +111,10 @@ export async function configAction(): Promise<void> {
           });
 
           console.log(
-            `Your new sync repository is available here:\n${repository.url}`,
+            colors.green('\xa0\u2713'),
+            'Repository named',
+            `"${ansi.link(colors.blue(repository.name), repository.url)}"`,
+            'has been created and ready for use.',
           );
         }
       },

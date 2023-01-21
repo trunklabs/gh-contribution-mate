@@ -1,8 +1,8 @@
-import { Command } from 'cliffy';
+import { ansi, colors, Command } from 'cliffy';
+import { EOL } from 'std/fs';
 import { VERSION } from 'version';
 import { config } from 'commands/config';
 
-// TODO: Improve description with ansi/tty
 await new Command()
   .name('contribution-mate')
   .version(VERSION)
@@ -12,8 +12,12 @@ await new Command()
   .meta(
     'Create an alias',
     `
-  To create a short alias for contribution-mate, you can use GitHub CLI aliases:
-  https://cli.github.com/manual/gh_alias
+    ${EOL.LF}\xa0\xa0To create a short alias for contribution-mate, you can use ${
+      ansi.link(
+        colors.blue('GitHub CLI Aliases'),
+        'https://cli.github.com/manual/gh_alias',
+      )
+    }.
 
   For example:
   gh alias set cm 'contribution-mate'
