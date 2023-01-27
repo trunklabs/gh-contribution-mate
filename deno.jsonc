@@ -1,5 +1,18 @@
 {
-  "importMap": "import_map.json",
+  "imports": {
+    "std/fs": "https://deno.land/std@0.170.0/fs/mod.ts",
+    "std/path": "https://deno.land/std@0.171.0/path/mod.ts",
+    "dir": "https://deno.land/x/dir@1.5.1/mod.ts",
+    "cliffy": "https://deno.land/x/cliffy@v0.25.6/mod.ts",
+    "zod": "https://deno.land/x/zod@v3.20.1/mod.ts",
+    "rambda": "https://mckgnjtrq3abdh6fhic5ddwopjdoxtpu2vvkyphhzwui4egizoma.arweave.net/YJRmpnGGwBGfxToF0Y7OekbrzfTVaqw8582ojhDIy5g/mod.ts",
+    "version": "./version.ts",
+    "commands/config": "./src/commands/config/mod.ts",
+    "models/repository": "./src/models/repository/mod.ts",
+    "models/git": "./src/models/git/mod.ts",
+    "models/config": "./src/models/config/mod.ts",
+    "utils": "./src/utils/mod.ts"
+  },
   "lint": {
     "files": {
       "exclude": ["dist"]
