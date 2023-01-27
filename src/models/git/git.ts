@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isEmpty } from 'rambda';
 
 export type GitAuthor = z.infer<typeof GitAuthor>;
 export const GitAuthor = z.object({
@@ -13,7 +14,9 @@ async function getGitConfigParam(key: string): Promise<string | undefined> {
   });
   const { success } = await proc.status();
   if (!success) return;
-  return new TextDecoder().decode(await proc.output()).trim();
+  const result = new TextDecoder().decode(await proc.output()).trim();
+  if (isEmpty(result)) return;
+  return result;
 }
 
 export async function getGitAuthor(): Promise<GitAuthor> {
