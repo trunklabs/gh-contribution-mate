@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { isEmpty, tryCatch } from 'rambda';
 
 export class RepositoryError extends Error {
@@ -7,34 +8,43 @@ export class RepositoryError extends Error {
   }
 }
 
-export type RepositoryLike = {
-  name: string;
-  isFork: boolean;
-  isPrivate: boolean;
-  url: string;
-};
+export type Repository = z.infer<typeof Repository>;
+export const Repository = z.object({
+  name: z.string().trim(),
+  isFork: z.boolean(),
+  isPrivate: z.boolean(),
+  url: z.string().trim().url(),
+});
 
-export function isRepository(obj: unknown): obj is RepositoryLike {
-  return typeof obj === 'object' && obj !== null && 'name' in obj &&
-    'isFork' in obj && 'isPrivate' in obj && 'url' in obj;
+export function isRepository(obj: unknown): obj is Repository {
+  try {
+    Repository.parse(obj);
+    return true;
+  } catch (_) {
+    return false;
+  }
 }
 
-let cachedRepository: RepositoryLike | null = null;
+let cachedRepository: Repository | null = null;
 
 function setCachedRepository(
-  { name, isFork, isPrivate, url }: RepositoryLike,
-): RepositoryLike {
+  { name, isFork, isPrivate, url }: Repository,
+): Repository {
   cachedRepository = { name, isFork, isPrivate, url };
   return cachedRepository;
 }
 
 export async function getRepository(
-  { name }: Pick<RepositoryLike, 'name'>,
-): Promise<RepositoryLike> {
+  { name }: Pick<Repository, 'name'>,
+): Promise<Repository> {
   if (cachedRepository && cachedRepository.name === name) {
     return cachedRepository;
   }
 
+  /**
+   * Be aware that json options are not type-safe at the moment.
+   * In case a change is needed make sure this is aligned with the `Repository` type.
+   */
   const proc = Deno.run({
     cmd: ['gh', 'repo', 'view', name, '--json', 'isFork,isPrivate,name,url'],
     stdout: 'piped',
@@ -62,7 +72,7 @@ export async function getRepository(
    * In case the repository exists, we want to parse the JSON response and cache it.
    * If the parsing fails, we want to stop the execution completely.
    */
-  const obj = tryCatch(JSON.parse, () => {
+  const obj: unknown = tryCatch(JSON.parse, () => {
     console.error('ERROR', 'Failed to parse JSON response');
     Deno.exit(1);
   })(stdout);
@@ -81,8 +91,8 @@ export async function getRepository(
 }
 
 export async function createRepository(
-  { name }: Pick<RepositoryLike, 'name'>,
-): Promise<RepositoryLike> {
+  { name }: Pick<Repository, 'name'>,
+): Promise<Repository> {
   const proc = Deno.run({
     cmd: [
       'gh',

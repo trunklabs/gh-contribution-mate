@@ -3,29 +3,14 @@ import { colors } from 'cliffy';
 import { default as dir } from 'dir';
 import { z } from 'zod';
 
-/**
- * TODO: Improve
- * We have two AuthorLike types, one in models/git and one here.
- * Would be nice to have one type for both, or at least a common interface.
- */
-export type AuthorLike = {
-  name: string;
-  email: string;
-};
-
-export type ConfigLike = {
-  name: string;
-  email: string;
-  repository: string;
-};
-
-export const configSchema = z.object({
-  name: z.string(),
-  email: z.string(),
-  repository: z.string(),
+export type Config = z.infer<typeof Config>;
+export const Config = z.object({
+  name: z.string().trim().min(1),
+  email: z.string().email().trim(),
+  repository: z.string().trim().regex(/^[a-zA-Z0-9-_.]+$/),
 });
 
-export function getConfigDir() {
+export function getConfigDir(): string {
   const base = 'contribution-mate';
 
   /**
@@ -41,26 +26,18 @@ export function getConfigDir() {
   return join(dir('config') as string, base);
 }
 
-export function getConfigPath() {
+export function getConfigPath(): string {
   return join(getConfigDir(), 'config.json');
 }
 
-export async function getConfig(): Promise<ConfigLike> {
-  const data = JSON.parse(await Deno.readTextFile(getConfigPath()));
-  const config = configSchema.parse(data);
-  return config;
+export async function getConfig(): Promise<Config> {
+  const obj: unknown = JSON.parse(
+    await Deno.readTextFile(getConfigPath()),
+  );
+  return Config.parse(obj);
 }
 
-/**
- * TODO: Implement
- * Get author from the config.
- */
-export async function getAuthor(): Promise<AuthorLike> {
-  const { name, email }: Partial<ConfigLike> = await getConfig();
-  return { name, email };
-}
-
-export function notifyConfigExists() {
+export function notifyConfigExists(): void {
   console.log(
     colors.green('\xa0\u2713'),
     colors.green('You have already configured contribution-mate!'),
@@ -72,6 +49,6 @@ export function notifyConfigExists() {
  * Write config to disk in JSON format.
  * If exists - update it.
  */
-export async function writeConfig(config: ConfigLike): Promise<ConfigLike> {
+export async function writeConfig(config: Config): Promise<Config> {
   return await Promise.resolve(config);
 }

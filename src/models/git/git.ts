@@ -1,18 +1,24 @@
-export type GitAuthorLike = {
-  name: string;
-  email: string;
-};
+import { z } from 'zod';
 
-export async function getGitAuthor(): Promise<GitAuthorLike> {
-  const [name, email] = await Promise.all(['name', 'email'].map(async (key) => {
-    const proc = Deno.run({
-      cmd: ['git', 'config', '--global', `user.${key}`],
-      stdout: 'piped',
-    });
-    const { success } = await proc.status();
-    if (!success) return '';
-    return new TextDecoder().decode(await proc.output()).trim();
-  }));
+export type GitAuthor = z.infer<typeof GitAuthor>;
+export const GitAuthor = z.object({
+  name: z.string().trim().optional(),
+  email: z.string().email().trim().optional(),
+});
 
-  return { name, email };
+async function getGitConfigParam(key: string): Promise<string | undefined> {
+  const proc = Deno.run({
+    cmd: ['git', 'config', '--global', key],
+    stdout: 'piped',
+  });
+  const { success } = await proc.status();
+  if (!success) return;
+  return new TextDecoder().decode(await proc.output()).trim();
+}
+
+export async function getGitAuthor(): Promise<GitAuthor> {
+  return GitAuthor.parse({
+    name: await getGitConfigParam('user.name'),
+    email: await getGitConfigParam('user.email'),
+  });
 }
