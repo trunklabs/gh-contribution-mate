@@ -16,34 +16,23 @@ import {
   RepositoryError,
 } from 'models/repository';
 import {
-  type AuthorLike,
-  type ConfigLike,
-  getAuthor,
+  Config,
   getConfig,
   getConfigPath,
   notifyConfigExists,
   writeConfig,
 } from 'models/config';
-import { getGitAuthor, type GitAuthorLike } from 'models/git';
+import { getGitAuthor, GitAuthor } from 'models/git';
 import { exists, sanitizeString } from 'utils';
 
 export async function configAction(): Promise<void> {
-  const configured: boolean = await exists(getConfigPath());
-  const _defaultAuthor: AuthorLike | GitAuthorLike = await ifElse(
+  const config: Config = await ifElse(
     equals(true),
-    pipe(notifyConfigExists, promptConfigUpdate, updateConfigOrExit),
-    getGitAuthor,
-  )(configured);
+    pipe(notifyConfigExists, promptConfigUpdate, getConfigOrExit),
+    getDefaultConfig,
+  )(await exists(getConfigPath()));
 
-  const _defaultRepo: Partial<ConfigLike> = await ifElse(
-    equals(true),
-    getConfig,
-    function () {
-      return { repository: 'contribution-mate-sync' };
-    },
-  )(configured);
-
-  const result = await prompt([
+  const result: Config = await prompt([
     {
       type: Input,
       name: 'name',
@@ -51,7 +40,7 @@ export async function configAction(): Promise<void> {
       hint: 'Different authors can be configured per repository later on.',
       transform: sanitizeString,
       validate: compose(not, isEmpty, sanitizeString),
-      default: _defaultAuthor.name,
+      default: config.name,
     },
     {
       type: Input,
@@ -60,7 +49,7 @@ export async function configAction(): Promise<void> {
       hint: 'Different emails can be configured per repository later on.',
       transform: sanitizeString,
       validate: compose(not, isEmpty, sanitizeString),
-      default: _defaultAuthor.email,
+      default: config.email,
       after: async ({ email }, next) => {
         when<string, void>(
           compose(not, endsWith('@users.noreply.github.com')),
@@ -77,7 +66,7 @@ export async function configAction(): Promise<void> {
         'If you already have a repository on GitHub that you use for synchronization, you can type it here, otherwise we will create a new one for you.',
       transform: sanitizeString,
       validate: compose(not, isEmpty, sanitizeString),
-      default: _defaultRepo.repository,
+      default: config.repository,
       after: async (opts, next) => {
         try {
           const repository = await getRepository({
@@ -121,9 +110,16 @@ export async function configAction(): Promise<void> {
     },
   ]);
 
-  await writeConfig(result as ConfigLike);
+  await writeConfig(result);
 
   console.log('Done ✨');
+}
+
+async function getDefaultConfig(): Promise<Config> {
+  const { name = '', email = '' }: GitAuthor = await getGitAuthor();
+  const repository = 'contribution-mate-sync';
+
+  return { name, email, repository };
 }
 
 function promptConfigUpdate(): Promise<boolean> {
@@ -133,12 +129,12 @@ function promptConfigUpdate(): Promise<boolean> {
   });
 }
 
-async function updateConfigOrExit(
+async function getConfigOrExit(
   confirmed: Promise<boolean>,
-): Promise<AuthorLike> | never {
+): Promise<Config> | never {
   return ifElse(
     equals(true),
-    getAuthor,
+    getConfig,
     (): never => Deno.exit(0),
   )(await confirmed);
 }
