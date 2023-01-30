@@ -14,6 +14,10 @@ export const Repository = z.object({
   isFork: z.boolean(),
   isPrivate: z.boolean(),
   url: z.string().trim().url(),
+  isInOrganization: z.boolean(),
+  owner: z.object({
+    login: z.string().trim().min(1),
+  }),
 });
 
 export function isRepository(obj: unknown): obj is Repository {
@@ -28,10 +32,42 @@ export function isRepository(obj: unknown): obj is Repository {
 let cachedRepository: Repository | null = null;
 
 function setCachedRepository(
-  { name, isFork, isPrivate, url }: Repository,
+  { name, isFork, isPrivate, url, isInOrganization, owner }: Repository,
 ): Repository {
-  cachedRepository = { name, isFork, isPrivate, url };
+  cachedRepository = {
+    name,
+    isFork,
+    isPrivate,
+    url,
+    isInOrganization,
+    owner: { login: owner.login },
+  };
   return cachedRepository;
+}
+
+// ? Probably not the right place for it. New user model?
+async function getUsername() {
+  const proc = Deno.run({
+    cmd: ['bash'],
+    stdin: 'piped',
+    stdout: 'piped',
+    stderr: 'piped',
+  });
+
+  const encoder = new TextEncoder();
+  const decoder = new TextDecoder();
+
+  await proc.stdin.write(encoder.encode(`gh api user | jq -r '.login'`));
+  await proc.stdin.close();
+  const stderr = decoder.decode(await proc.stderrOutput()).trim();
+  proc.close();
+
+  if (!isEmpty(stderr)) {
+    throw new Error(stderr);
+  }
+
+  const stdout = decoder.decode(await proc.output()).trim();
+  return stdout;
 }
 
 export async function getRepository(
@@ -46,12 +82,22 @@ export async function getRepository(
    * In case a change is needed make sure this is aligned with the `Repository` type.
    */
   const proc = Deno.run({
-    cmd: ['gh', 'repo', 'view', name, '--json', 'isFork,isPrivate,name,url'],
+    cmd: [
+      'gh',
+      'repo',
+      'view',
+      name,
+      '--json',
+      'isFork,isPrivate,name,url,isInOrganization,owner',
+    ],
     stdout: 'piped',
     stderr: 'piped',
   });
-  const stdout = new TextDecoder().decode(await proc.output()).trim();
-  const stderr = new TextDecoder().decode(await proc.stderrOutput()).trim();
+  const decoder = new TextDecoder();
+  const stdout = decoder.decode(await proc.output()).trim();
+  const stderr = decoder.decode(await proc.stderrOutput()).trim();
+
+  proc.close();
 
   /**
    * In case there's an unexpected error from the `gh` command, we want to stop the execution completely.
@@ -77,12 +123,17 @@ export async function getRepository(
     Deno.exit(1);
   })(stdout);
 
-  if (!isRepository(obj) || obj.isFork) {
+  const username = await getUsername();
+
+  if (
+    !isRepository(obj) || obj.isFork || obj.isInOrganization ||
+    obj.owner.login !== username
+  ) {
     console.error(
       'ERROR',
       'Invalid repository - this repository cannot be used',
       '\n',
-      'Make sure the repository is not a fork',
+      'Make sure the repository is not a fork, not in an organization and belongs to the current user',
     );
     throw new RepositoryError('Invalid repository');
   }
@@ -109,6 +160,8 @@ export async function createRepository(
 
   const { success } = await proc.status();
   const stdout = new TextDecoder().decode(await proc.output()).trim();
+
+  proc.close();
 
   if (!success || !stdout.includes(name)) {
     console.error('ERROR', 'Failed to create a new repository');

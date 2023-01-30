@@ -13,8 +13,14 @@ async function getGitConfigParam(key: string): Promise<string | undefined> {
     stdout: 'piped',
   });
   const { success } = await proc.status();
-  if (!success) return;
+
+  if (!success) {
+    proc.close();
+    return;
+  }
+
   const result = new TextDecoder().decode(await proc.output()).trim();
+  proc.close();
   if (isEmpty(result)) return;
   return result;
 }
