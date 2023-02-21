@@ -1,0 +1,18 @@
+name: Check PR
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+    steps:
+      - uses: denoland/setup-deno@v1
+        with:
+          deno-version: v1.x
+      - uses: actions/checkout@v3
+      - name: Check formatting
+        run: deno fmt --check
+      - name: Lint
+        run: deno lint

@@ -2,10 +2,11 @@
 
 ## Table of contents
 
-- [Setting Up the Environment](#setting-up-the-environment)
-- [Submitting a Pull Request](#submitting-a-pull-request--pr-)
-- [Code Style Guidelines](#code-style-guidelines)
-- [Commit Message Guidelines](#commit-message-guidelines)
+- [Contributing](#contributing)
+  - [Table of contents](#table-of-contents)
+  - [Setting Up the Environment](#setting-up-the-environment)
+  - [Submitting a Pull Request (PR)](#submitting-a-pull-request-pr)
+  - [Code Style Guidelines](#code-style-guidelines)
 
 ## Setting Up the Environment
 
@@ -16,8 +17,6 @@
    not installed.
 4. Optionally setup your editor/IDE following the
    [official documentation][deno-env].
-5. Optionally run `deno cache --reload --lock=deno.lock script/commitlint.ts` to
-   cache commit linter's dependencies.
 
 To view all available scripts:
 
@@ -37,13 +36,10 @@ Before you submit your Pull Request (PR) consider the following guidelines:
   ```
 - Make sure your changes are following the
   [code style guidelines](#code-style-guidelines).
-- Commit your changes following our
-  [commit message guidelines](#commit-message-guidelines).
-  > Before committing we recommend running the following command to cache commit
-  > linter's dependencies.
-  > ```bash
-  > deno cache --reload --lock=deno.lock script/commitlint.ts
-  > ```
+- Commit your changes.
+  ```bash
+  git commit -m "feat: add new feature"
+  ```
 - Push your changes to GitHUb:
   ```bash
   git push origin feature-branch
@@ -53,30 +49,9 @@ Before you submit your Pull Request (PR) consider the following guidelines:
 ## Code Style Guidelines
 
 We follow Deno formatting and linting. You can automatically apply formatting
-rules with [deno fmt][deno-fmt], and lint with [deno lint][deno-lint].
-
-## Commit Message Guidelines
-
-We are following [Conventional Commits][conventional-commits] convention to
-format commit messages. Commits are automatically linted with
-[commitlint][commitlint] using
-[config-conventional][commitlint-config-conventional] rules.
-
-Following types are available:
-
-- build: Changes that affect the build system or external dependencies
-- chore: Changes to the build process or auxiliary tools and libraries such as
-  documentation generation
-- ci: Changes to the CI configuration files and scripts
-- docs: Documentation only changes
-- feat: A new feature
-- fix: A bug fix
-- perf: A code change that improves performance
-- refactor: A code change that neither fixes a bug nor adds a feature
-- revert: Revert of a previous commit
-- style: Changes that do not affect the meaning of the code (white-space,
-  formatting, missing semi-colons, etc)
-- test: Adding missing tests or correcting existing tests
+rules with [deno fmt][deno-fmt], and lint with [deno lint][deno-lint]. We
+encourage you to [setup your IDE/Editor][deno-env] to automatically apply
+formatting.
 
 [deno-install]: https://deno.land/manual@v1.29.1/getting_started/installation
 [deno-env]: https://deno.land/manual@v1.29.1/getting_started/setup_your_environment
