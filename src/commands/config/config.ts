@@ -1,15 +1,6 @@
 import { ansi, colors, Input, prompt, Toggle } from 'cliffy';
 import { EOL } from 'std/fs';
-import {
-  compose,
-  endsWith,
-  equals,
-  ifElse,
-  isEmpty,
-  not,
-  pipe,
-  when,
-} from 'rambda';
+import { compose, endsWith, equals, ifElse, not, pipe, when } from 'rambda';
 import {
   createRepository,
   getRepository,
@@ -23,7 +14,7 @@ import {
   writeConfig,
 } from 'models/config';
 import { getGitAuthor, GitAuthor } from 'models/git';
-import { exists, sanitizeString } from 'utils';
+import { exists, sanitizeString, validate } from 'utils';
 
 export async function configAction(): Promise<void> {
   const config: Config = await ifElse(
@@ -39,7 +30,7 @@ export async function configAction(): Promise<void> {
       message: 'Default commit author name:',
       hint: 'Different authors can be configured per repository later on.',
       transform: sanitizeString,
-      validate: compose(not, isEmpty, sanitizeString),
+      validate: compose(validate(Config.shape.name.parse), sanitizeString),
       default: config.name,
     },
     {
@@ -48,7 +39,7 @@ export async function configAction(): Promise<void> {
       message: 'Default commit author email:',
       hint: 'Different emails can be configured per repository later on.',
       transform: sanitizeString,
-      validate: compose(not, isEmpty, sanitizeString),
+      validate: compose(validate(Config.shape.email.parse), sanitizeString),
       default: config.email,
       after: async ({ email }, next) => {
         when<string, void>(
@@ -65,7 +56,10 @@ export async function configAction(): Promise<void> {
       hint:
         'If you already have a repository on GitHub that you use for synchronization, you can type it here, otherwise we will create a new one for you.',
       transform: sanitizeString,
-      validate: compose(not, isEmpty, sanitizeString),
+      validate: compose(
+        validate(Config.shape.repository.parse),
+        sanitizeString,
+      ),
       default: config.repository,
       after: async (opts, next) => {
         try {
