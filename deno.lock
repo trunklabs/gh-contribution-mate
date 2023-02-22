@@ -139,6 +139,7 @@
     "https://deno.land/x/dir@1.5.1/home_dir/mod.ts": "53777e4fb2586ae02ce94adf2c99f2edb2dcf6e72d07ac289b71593cfacbdbbf",
     "https://deno.land/x/dir@1.5.1/mod.ts": "95e1519b7b629c995025652342b36fbf64a6a9a0bd7822b0c4573a22f42f0529",
     "https://deno.land/x/dir@1.5.1/tmp_dir/mod.ts": "b2422e886d444f6cfc75340e438fa4dd458c951f81452f7634ae444d2e7a3e3f",
+    "https://deno.land/x/memoizy@1.0.0/mod.ts": "8b421c57a2c9bcf60f0d845aa46d19b09de838953c9d440d9abbc8e3cabb791b",
     "https://deno.land/x/zod@v3.20.1/ZodError.ts": "b4ff327bd2870a7c0930b30cb1d6eb741d36a5a7d0755fc3aa7146c108bc8a0e",
     "https://deno.land/x/zod@v3.20.1/errors.ts": "5285922d2be9700cc0c70c95e4858952b07ae193aa0224be3cbd5cd5567eabef",
     "https://deno.land/x/zod@v3.20.1/external.ts": "a6cfbd61e9e097d5f42f8a7ed6f92f93f51ff927d29c9fbaec04f03cbce130fe",
