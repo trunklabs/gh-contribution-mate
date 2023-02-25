@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { isEmpty, tryCatch } from 'rambda';
+import { memoizy } from 'memoizy';
 
 export class RepositoryError extends Error {
   constructor(message: string = 'Repository error') {
@@ -29,12 +30,10 @@ export function isRepository(obj: unknown): obj is Repository {
   }
 }
 
-let cachedRepository: Repository | null = null;
-
-function setCachedRepository(
+function constructRepositoryObj(
   { name, isFork, isPrivate, url, isInOrganization, owner }: Repository,
 ): Repository {
-  cachedRepository = {
+  return {
     name,
     isFork,
     isPrivate,
@@ -42,7 +41,6 @@ function setCachedRepository(
     isInOrganization,
     owner: { login: owner.login },
   };
-  return cachedRepository;
 }
 
 // ? Probably not the right place for it. New user model?
@@ -57,7 +55,7 @@ async function getUsername() {
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
 
-  await proc.stdin.write(encoder.encode(`gh api user | jq -r '.login'`));
+  await proc.stdin.write(encoder.encode(`gh api user`));
   await proc.stdin.close();
   const stderr = decoder.decode(await proc.stderrOutput()).trim();
   proc.close();
@@ -66,80 +64,78 @@ async function getUsername() {
     throw new Error(stderr);
   }
 
-  const stdout = decoder.decode(await proc.output()).trim();
-  return stdout;
+  const { login: username } = JSON.parse(
+    decoder.decode(await proc.output()).trim(),
+  );
+  return username;
 }
 
-export async function getRepository(
-  { name }: Pick<Repository, 'name'>,
-): Promise<Repository> {
-  if (cachedRepository && cachedRepository.name === name) {
-    return cachedRepository;
-  }
+export const getRepository = memoizy(
+  async ({ name }: Pick<Repository, 'name'>): Promise<Repository> => {
+    /**
+     * Be aware that json options are not type-safe at the moment.
+     * In case a change is needed make sure this is aligned with the `Repository` type.
+     */
+    const proc = Deno.run({
+      cmd: [
+        'gh',
+        'repo',
+        'view',
+        name,
+        '--json',
+        'isFork,isPrivate,name,url,isInOrganization,owner',
+      ],
+      stdout: 'piped',
+      stderr: 'piped',
+    });
+    const decoder = new TextDecoder();
+    const stdout = decoder.decode(await proc.output()).trim();
+    const stderr = decoder.decode(await proc.stderrOutput()).trim();
 
-  /**
-   * Be aware that json options are not type-safe at the moment.
-   * In case a change is needed make sure this is aligned with the `Repository` type.
-   */
-  const proc = Deno.run({
-    cmd: [
-      'gh',
-      'repo',
-      'view',
-      name,
-      '--json',
-      'isFork,isPrivate,name,url,isInOrganization,owner',
-    ],
-    stdout: 'piped',
-    stderr: 'piped',
-  });
-  const decoder = new TextDecoder();
-  const stdout = decoder.decode(await proc.output()).trim();
-  const stderr = decoder.decode(await proc.stderrOutput()).trim();
+    proc.close();
 
-  proc.close();
+    /**
+     * In case there's an unexpected error from the `gh` command, we want to stop the execution completely.
+     */
+    if (!isEmpty(stderr) && !stderr.includes(name)) {
+      console.error('ERROR', stderr);
+      Deno.exit(1);
+    }
 
-  /**
-   * In case there's an unexpected error from the `gh` command, we want to stop the execution completely.
-   */
-  if (!isEmpty(stderr) && !stderr.includes(name)) {
-    console.error('ERROR', stderr);
-    Deno.exit(1);
-  }
+    /**
+     * In case the repository doesn't exist, we want to throw an error.
+     */
+    if (!isEmpty(stderr) && stderr.includes(name)) {
+      throw new RepositoryError('Repository not found');
+    }
 
-  /**
-   * In case the repository doesn't exist, we want to throw an error.
-   */
-  if (!isEmpty(stderr) && stderr.includes(name)) {
-    throw new RepositoryError('Repository not found');
-  }
+    /**
+     * In case the repository exists, we want to parse the JSON response and cache it.
+     * If the parsing fails, we want to stop the execution completely.
+     */
+    const obj: unknown = tryCatch(JSON.parse, () => {
+      console.error('ERROR', 'Failed to parse JSON response');
+      Deno.exit(1);
+    })(stdout);
 
-  /**
-   * In case the repository exists, we want to parse the JSON response and cache it.
-   * If the parsing fails, we want to stop the execution completely.
-   */
-  const obj: unknown = tryCatch(JSON.parse, () => {
-    console.error('ERROR', 'Failed to parse JSON response');
-    Deno.exit(1);
-  })(stdout);
+    const username = await getUsername();
 
-  const username = await getUsername();
+    if (
+      !isRepository(obj) || obj.isFork || obj.isInOrganization ||
+      obj.owner.login !== username
+    ) {
+      console.error(
+        'ERROR',
+        'Invalid repository - this repository cannot be used',
+        '\n',
+        'Make sure the repository is not a fork, not in an organization and belongs to the current user',
+      );
+      throw new RepositoryError('Invalid repository');
+    }
 
-  if (
-    !isRepository(obj) || obj.isFork || obj.isInOrganization ||
-    obj.owner.login !== username
-  ) {
-    console.error(
-      'ERROR',
-      'Invalid repository - this repository cannot be used',
-      '\n',
-      'Make sure the repository is not a fork, not in an organization and belongs to the current user',
-    );
-    throw new RepositoryError('Invalid repository');
-  }
-
-  return setCachedRepository(obj);
-}
+    return constructRepositoryObj(obj);
+  },
+);
 
 export async function createRepository(
   { name }: Pick<Repository, 'name'>,
