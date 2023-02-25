@@ -64,7 +64,9 @@ async function getUsername() {
     throw new Error(stderr);
   }
 
-  const { login: username } = JSON.parse(decoder.decode(await proc.output()).trim());
+  const { login: username } = JSON.parse(
+    decoder.decode(await proc.output()).trim(),
+  );
   return username;
 }
 
