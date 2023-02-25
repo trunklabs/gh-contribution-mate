@@ -64,8 +64,8 @@ async function getUsername() {
     throw new Error(stderr);
   }
 
-  const repository = JSON.parse(decoder.decode(await proc.output()).trim());
-  return repository.login;
+  const { login: username } = JSON.parse(decoder.decode(await proc.output()).trim());
+  return username;
 }
 
 export const getRepository = memoizy(
