@@ -1,7 +1,9 @@
 import { join } from 'std/path';
 import { colors } from 'cliffy';
+import { equals, when } from 'rambda';
 import { default as dir } from 'dir';
 import { z } from 'zod';
+import { exists } from 'utils';
 
 export type Config = z.infer<typeof Config>;
 export const Config = z.object({
@@ -44,11 +46,18 @@ export function notifyConfigExists(): void {
   );
 }
 
-/**
- * TODO: Implement
- * Write config to disk in JSON format.
- * If exists - update it.
- */
 export async function writeConfig(config: Config): Promise<Config> {
-  return await Promise.resolve(config);
+  const parsedConfig = Config.parse(config);
+
+  await when(equals(false), async () => {
+    await Deno.mkdir(getConfigDir(), { recursive: true });
+  })(await exists(getConfigDir()));
+
+  await Deno.writeTextFile(
+    getConfigPath(),
+    JSON.stringify(parsedConfig, null, 2),
+    { create: true },
+  );
+
+  return parsedConfig;
 }

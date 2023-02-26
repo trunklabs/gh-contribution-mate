@@ -89,6 +89,7 @@ export async function configAction(): Promise<void> {
 
           if (!confirmed) return await next('repository');
 
+          getRepository.delete({ name: opts.repository ?? '' });
           const repository = await createRepository({
             name: opts.repository ?? '',
           });
@@ -106,6 +107,7 @@ export async function configAction(): Promise<void> {
 
   await writeConfig(result);
 
+  // TODO: Describe next steps
   console.log('Done ✨');
 }
 
