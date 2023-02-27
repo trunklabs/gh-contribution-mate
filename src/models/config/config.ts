@@ -1,6 +1,6 @@
 import { join } from 'std/path';
 import { colors } from 'cliffy';
-import { equals, when } from 'rambda';
+import { mergeDeepRight, not } from 'rambda';
 import { default as dir } from 'dir';
 import { z } from 'zod';
 import { exists } from 'utils';
@@ -47,17 +47,23 @@ export function notifyConfigExists(): void {
 }
 
 export async function writeConfig(config: Config): Promise<Config> {
-  const parsedConfig = Config.parse(config);
+  await ensureConfigDir();
 
-  await when(equals(false), async () => {
-    await Deno.mkdir(getConfigDir(), { recursive: true });
-  })(await exists(getConfigDir()));
+  const mergedConfig = mergeDeepRight<Config>(
+    await getConfig(),
+    Config.parse(config),
+  );
 
   await Deno.writeTextFile(
     getConfigPath(),
-    JSON.stringify(parsedConfig, null, 2),
+    JSON.stringify(mergedConfig, null, 2),
     { create: true },
   );
 
-  return parsedConfig;
+  return mergedConfig;
+}
+
+export async function ensureConfigDir(): Promise<void> {
+  const configExists = await exists(getConfigPath());
+  if (not(configExists)) await Deno.mkdir(getConfigDir(), { recursive: true });
 }
