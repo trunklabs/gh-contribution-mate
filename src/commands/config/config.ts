@@ -107,8 +107,16 @@ export async function configAction(): Promise<void> {
 
   await writeConfig(result);
 
-  // TODO: Describe next steps
-  console.log('Done ✨');
+  console.log(
+    '\xa0🎉',
+    colors.green('You are all set!'),
+    EOL.LF,
+    colors.green('ℹ️\xa0'),
+    colors.green(
+      'You can add local repositories for synchronization with the "add" command.',
+    ),
+    colors.green('See more information with the "help" command.'),
+  );
 }
 
 async function getDefaultConfig(): Promise<Config> {
