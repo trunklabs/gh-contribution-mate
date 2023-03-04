@@ -115,7 +115,7 @@ export async function configAction(): Promise<void> {
     colors.green(
       'You can add local repositories for synchronization with the "add" command.',
     ),
-    colors.green('See more information with the "help" command.'),
+    colors.green('See more information with the "--help" flag.'),
   );
 }
 
