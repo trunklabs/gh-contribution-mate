@@ -12,7 +12,7 @@
     "models/repository": "./src/models/repository/mod.ts",
     "models/git": "./src/models/git/mod.ts",
     "models/config": "./src/models/config/mod.ts",
-    "utils": "./src/utils/mod.ts"
+    "lib": "./src/lib/mod.ts"
   },
   "lint": {
     "files": {
