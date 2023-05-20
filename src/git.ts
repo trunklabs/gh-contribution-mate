@@ -1,4 +1,3 @@
-import { type RepoType } from './config.ts';
 import { z } from 'zod';
 
 export const AuthorSchema = z.object({
