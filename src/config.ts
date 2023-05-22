@@ -10,7 +10,7 @@ const RepoSchema = z.object({
   authors: z.array(AuthorSchema),
 });
 const ConfigSchema = z.object({
-  repos: z.array(RepoSchema),
+  repos: z.record(RepoSchema),
 });
 
 export type RepoType = z.infer<typeof RepoSchema>;
@@ -18,7 +18,7 @@ export type ConfigType = z.infer<typeof ConfigSchema>;
 
 function createDefaultConfig(): ConfigType {
   return {
-    repos: [],
+    repos: {},
   };
 }
 
@@ -82,13 +82,4 @@ export async function setConfig(config: ConfigType): Promise<ConfigType> {
   );
 
   return mergedConfig;
-}
-
-export function updateRepoAuthors(
-  repos: RepoType[],
-  repoToUpdate: RepoType,
-): RepoType[] {
-  return repos.map((repo) =>
-    repo.dir === repoToUpdate.dir ? repoToUpdate : repo
-  );
 }

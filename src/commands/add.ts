@@ -1,12 +1,7 @@
 import { Checkbox, colors, Command } from 'cliffy';
 import { basename } from 'std/path';
 import { EOL } from 'std/fs';
-import {
-  getConfig,
-  type RepoType,
-  setConfig,
-  updateRepoAuthors,
-} from '../config.ts';
+import { getConfig, type RepoType, setConfig } from '../config.ts';
 import { getAuthors } from '../git.ts';
 
 export default new Command()
@@ -34,12 +29,7 @@ export default new Command()
         ),
       };
 
-      const existingRepo = config.repos.find((r) => r.dir === repoPath);
-      if (existingRepo) {
-        config.repos = updateRepoAuthors(config.repos, repo);
-      } else {
-        config.repos.push(repo);
-      }
+      config.repos[basename(repoPath)] = repo;
     }
 
     await setConfig(config);
