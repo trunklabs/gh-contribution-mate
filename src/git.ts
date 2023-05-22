@@ -1,11 +1,30 @@
 import { z } from 'zod';
 
 export const AuthorSchema = z.object({
-  name: z.string().trim(),
+  name: z.string().min(1).trim(),
   email: z.string().email().trim(),
+});
+export const CommitSchema = z.object({
+  hash: z.string().min(1).trim(),
+  timestamp: z.number().int().positive(),
 });
 
 export type AuthorType = z.infer<typeof AuthorSchema>;
+export type CommitType = z.infer<typeof CommitSchema>;
+
+async function getGitConfigParam(key: string): Promise<string | undefined> {
+  const cmd = new Deno.Command('git', {
+    args: ['config', '--global', key],
+  });
+
+  const cmdOutput = await cmd.output();
+
+  if (cmdOutput.code !== 0) throw new TextDecoder().decode(cmdOutput.stderr);
+
+  const result = new TextDecoder().decode(await cmdOutput.stdout).trim();
+
+  return result;
+}
 
 export async function getAuthors(repoPath: string): Promise<AuthorType[]> {
   const getDefaultBranchCmd = new Deno.Command('git', {
@@ -50,4 +69,42 @@ export async function getAuthors(repoPath: string): Promise<AuthorType[]> {
   );
 
   return authors;
+}
+
+export async function getGitAuthor(): Promise<AuthorType | undefined> {
+  const name = await getGitConfigParam('user.name');
+  const email = await getGitConfigParam('user.email');
+
+  try {
+    return AuthorSchema.parse({ name, email });
+  } catch (_) { // todo: debugger
+    return;
+  }
+}
+
+/**
+ * Returns a list of commits authored by the given email in reverse chronological order.
+ * @param {string} email
+ * @returns {Promise<CommitType[]>}
+ */
+export async function getCommitsByEmail(email: string): Promise<CommitType[]> {
+  const cmd = new Deno.Command('git', {
+    args: [
+      'log',
+      `--author=${email}`,
+      '--pretty=format:%H|%cd',
+      '--date=format-local:%s',
+    ],
+  });
+
+  const cmdOutput = await cmd.output();
+
+  if (cmdOutput.code !== 0) throw new TextDecoder().decode(cmdOutput.stderr);
+
+  return new TextDecoder().decode(await cmdOutput.stdout).trim().split(
+    '\n',
+  ).map((line) => {
+    const [hash, timestamp] = line.split('|');
+    return { hash, timestamp: parseInt(timestamp) };
+  });
 }

@@ -1,20 +1,29 @@
+import { z } from 'zod';
 import { join } from 'std/path';
 import { default as dir } from 'dir';
-import { z } from 'zod';
-import { exists } from 'lib';
 import { mergeDeepRight } from 'rambda';
-import { AuthorSchema } from './git.ts';
+import { ensurePath, exists } from 'lib';
+import { AuthorSchema, CommitSchema } from './git.ts';
 
 const RepoSchema = z.object({
   dir: z.string(),
   authors: z.array(AuthorSchema),
 });
 const ConfigSchema = z.object({
+  author: AuthorSchema.optional(),
   repos: z.record(RepoSchema),
 });
+const HistorySchema = z.record(
+  z.record(
+    z.array(
+      CommitSchema.optional(),
+    ).optional(),
+  ).optional(),
+);
 
 export type RepoType = z.infer<typeof RepoSchema>;
 export type ConfigType = z.infer<typeof ConfigSchema>;
+export type HistoryType = z.infer<typeof HistorySchema>;
 
 function createDefaultConfig(): ConfigType {
   return {
@@ -42,13 +51,12 @@ function getConfigPath(): string {
   return join(getConfigDir(), 'config.json');
 }
 
-async function ensureConfigDir(): Promise<void> {
-  const configExists = await exists(getConfigPath());
-  if (!configExists) await Deno.mkdir(getConfigDir(), { recursive: true });
+function getHistoryPath(): string {
+  return join(getConfigDir(), 'history.json');
 }
 
 async function ensureConfigFile(): Promise<void> {
-  await ensureConfigDir();
+  await ensurePath(getConfigDir());
   const configPath = getConfigPath();
   const configExists = await exists(configPath);
   const defaultConfig = createDefaultConfig();
@@ -56,6 +64,18 @@ async function ensureConfigFile(): Promise<void> {
     await Deno.writeTextFile(
       configPath,
       JSON.stringify(defaultConfig, null, 2),
+    );
+  }
+}
+
+async function ensureHistoryFile(): Promise<void> {
+  await ensurePath(getConfigDir());
+  const historyPath = getHistoryPath();
+  const historyExists = await exists(historyPath);
+  if (!historyExists) {
+    await Deno.writeTextFile(
+      historyPath,
+      JSON.stringify({}, null, 2),
     );
   }
 }
@@ -68,12 +88,14 @@ export async function getConfig(): Promise<ConfigType> {
   return ConfigSchema.parse(obj);
 }
 
-export async function setConfig(config: ConfigType): Promise<ConfigType> {
+export async function setConfig(
+  config: Partial<ConfigType>,
+): Promise<ConfigType> {
   const currentConfig = await getConfig();
 
   const mergedConfig = mergeDeepRight<ConfigType>(
     ConfigSchema.parse(currentConfig),
-    ConfigSchema.parse(config),
+    ConfigSchema.partial().parse(config),
   );
 
   await Deno.writeTextFile(
@@ -82,4 +104,32 @@ export async function setConfig(config: ConfigType): Promise<ConfigType> {
   );
 
   return mergedConfig;
+}
+
+export async function getHistory(): Promise<HistoryType> {
+  await ensureHistoryFile();
+  const historyPath = getHistoryPath();
+
+  const obj: unknown = JSON.parse(await Deno.readTextFile(historyPath));
+  return HistorySchema.parse(obj);
+}
+
+export async function setHistory(
+  history: Partial<HistoryType>,
+): Promise<HistoryType> {
+  const currentHistory = await getHistory();
+
+  // todo: merge in reverse order by commit timestamp
+
+  const mergedHistory = mergeDeepRight<HistoryType>(
+    HistorySchema.parse(currentHistory),
+    HistorySchema.parse(history),
+  );
+
+  await Deno.writeTextFile(
+    getHistoryPath(),
+    JSON.stringify(mergedHistory, null, 2),
+  );
+
+  return mergedHistory;
 }

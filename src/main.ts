@@ -1,6 +1,7 @@
 import { Command } from 'cliffy';
 import { VERSION } from 'version';
 import add from './commands/add.ts';
+import sync from './commands/sync.ts';
 
 await new Command()
   .name('contribution-mate')
@@ -12,4 +13,5 @@ await new Command()
     this.showHelp();
   })
   .command('add', add)
+  .command('sync', sync)
   .parse(Deno.args);
