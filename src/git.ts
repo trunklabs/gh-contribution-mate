@@ -87,7 +87,10 @@ export async function getGitAuthor(): Promise<AuthorType | undefined> {
  * @param {string} email
  * @returns {Promise<CommitType[]>}
  */
-export async function getCommitsByEmail(email: string): Promise<CommitType[]> {
+export async function getCommitsByEmail(
+  email: string,
+  cwd: string,
+): Promise<CommitType[]> {
   const cmd = new Deno.Command('git', {
     args: [
       'log',
@@ -95,6 +98,7 @@ export async function getCommitsByEmail(email: string): Promise<CommitType[]> {
       '--pretty=format:%H|%cd',
       '--date=format-local:%s',
     ],
+    cwd,
   });
 
   const cmdOutput = await cmd.output();

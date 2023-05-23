@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { join } from 'std/path';
 import { default as dir } from 'dir';
-import { mergeDeepRight } from 'rambda';
+import { is, mergeDeepRight, mergeWith, sort, uniqWith } from 'rambda';
 import { ensurePath, exists } from 'lib';
 import { AuthorSchema, CommitSchema } from './git.ts';
 
@@ -119,9 +119,27 @@ export async function setHistory(
 ): Promise<HistoryType> {
   const currentHistory = await getHistory();
 
-  // todo: merge in reverse order by commit timestamp
+  const customizer = (a: unknown, b: unknown): unknown => {
+    if (Array.isArray(a) && Array.isArray(b)) {
+      const combinedCommits = a.concat(b);
+      const uniqueCommits = uniqWith((x, y) => {
+        return x.hash === y.hash && x.timestamp === y.timestamp;
+      }, combinedCommits);
+      return sort(
+        (commitA, commitB) => commitB.timestamp - commitA.timestamp,
+        uniqueCommits,
+      );
+    }
 
-  const mergedHistory = mergeDeepRight<HistoryType>(
+    if (is(Object, a) && is(Object, b)) {
+      return mergeWith(customizer, a, b);
+    }
+
+    return b;
+  };
+
+  const mergedHistory = mergeWith<HistoryType>(
+    customizer,
     HistorySchema.parse(currentHistory),
     HistorySchema.parse(history),
   );

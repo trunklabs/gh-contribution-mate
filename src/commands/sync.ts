@@ -46,7 +46,7 @@ export default new Command()
       history[name] = {};
 
       for (const author of repo.authors) {
-        const commitsByEmail = await getCommitsByEmail(author.email);
+        const commitsByEmail = await getCommitsByEmail(author.email, repo.dir);
 
         history[name]![author.email] = commitsByEmail.filter((commit) =>
           !currentHistory[name]?.[author.email]?.some((entry) =>
@@ -55,8 +55,6 @@ export default new Command()
         );
       }
     }
-
-    // todo: synch history
 
     setHistory(history);
   });
