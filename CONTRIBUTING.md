@@ -53,6 +53,17 @@ rules with [deno fmt][deno-fmt], and lint with [deno lint][deno-lint]. We
 encourage you to [setup your IDE/Editor][deno-env] to automatically apply
 formatting.
 
+## Release
+
+To release a new version the RC (release coordinator) should:
+
+1. Create a new release branch
+2. Bump up the version in `version.ts`
+3. Commit the changes, push the branch, and prepare a PR
+4. Merge the PR to main
+5. Pull the changes locally, create a new tag with the correct version and push
+   it
+
 [deno-install]: https://deno.land/manual@v1.29.1/getting_started/installation
 [deno-env]: https://deno.land/manual@v1.29.1/getting_started/setup_your_environment
 [github-prs]: https://github.com/trunklabs/gh-contribution-mate/pulls
