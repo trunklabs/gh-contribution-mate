@@ -84,6 +84,12 @@ for (const { platform, arch } of targets) {
   const cmd = new Deno.Command('deno', {
     args: [
       'compile',
+      '--allow-run=gh,git',
+      '--allow-read',
+      '--allow-write',
+      `--allow-env=${
+        platform === Platform.WINDOWS ? 'APPDATA' : 'XDG_CONFIG_HOME,HOME'
+      }}`,
       '-o',
       join(outDir, filename),
       '--target',
