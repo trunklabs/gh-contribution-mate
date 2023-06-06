@@ -20,7 +20,6 @@ export default new Command()
           basename(repoPath)
         } repository". Use arrow keys for navigation, space to select, and enter to submit.`,
         options: authors.map((author) => `${author.name} <${author.email}>`),
-        minOptions: 1,
       });
 
       const repo: RepoType = {

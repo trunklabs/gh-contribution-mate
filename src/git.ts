@@ -21,9 +21,7 @@ async function getGitConfigParam(key: string): Promise<string | undefined> {
 
   if (cmdOutput.code !== 0) throw new TextDecoder().decode(cmdOutput.stderr);
 
-  const result = new TextDecoder().decode(await cmdOutput.stdout).trim();
-
-  return result;
+  return new TextDecoder().decode(await cmdOutput.stdout).trim();
 }
 
 export async function getAuthors(repoPath: string): Promise<AuthorType[]> {
@@ -84,8 +82,6 @@ export async function getGitAuthor(): Promise<AuthorType | undefined> {
 
 /**
  * Returns a list of commits authored by the given email in reverse chronological order.
- * @param {string} email
- * @returns {Promise<CommitType[]>}
  */
 export async function getCommitsByEmail(
   email: string,
@@ -111,4 +107,68 @@ export async function getCommitsByEmail(
     const [hash, timestamp] = line.split('|');
     return { hash, timestamp: parseInt(timestamp) };
   });
+}
+
+export async function createCommit(
+  commit: CommitType & { author: AuthorType },
+  cwd: string,
+) {
+  const GIT_AUTHOR_NAME = commit.author.name;
+  const GIT_AUTHOR_EMAIL = commit.author.email;
+  const GIT_AUTHOR_DATE = commit.timestamp.toString();
+
+  const cmd = new Deno.Command('git', {
+    args: ['commit', '--allow-empty', '-m', commit.hash],
+    cwd,
+    env: {
+      GIT_AUTHOR_NAME,
+      GIT_AUTHOR_EMAIL,
+      GIT_AUTHOR_DATE,
+      GIT_COMMITTER_NAME: GIT_AUTHOR_NAME,
+      GIT_COMMITTER_EMAIL: GIT_AUTHOR_EMAIL,
+      GIT_COMMITTER_DATE: GIT_AUTHOR_DATE,
+    },
+  });
+
+  const cmdOutput = await cmd.output();
+
+  if (cmdOutput.code !== 0) throw new TextDecoder().decode(cmdOutput.stderr);
+}
+
+async function getMainBranch(cwd: string) {
+  const cmd = new Deno.Command('git', {
+    args: ['log', '-1', 'HEAD', '--pretty=format:%D'],
+    cwd,
+  });
+
+  const cmdOutput = await cmd.output();
+
+  if (cmdOutput.code !== 0) throw new TextDecoder().decode(cmdOutput.stderr);
+
+  return new TextDecoder().decode(await cmdOutput.stdout).split('->')[1].trim();
+}
+
+export async function pushRepositoryChanges(
+  cwd: string,
+  branch?: string,
+) {
+  const cmd = new Deno.Command('git', {
+    args: ['push', 'origin', branch ?? 'HEAD'],
+    cwd,
+  });
+
+  const cmdOutput = await cmd.output();
+
+  if (cmdOutput.code !== 0) {
+    const stderr = new TextDecoder().decode(cmdOutput.stderr);
+
+    console.log('error', stderr);
+
+    if (stderr.includes('cannot lock ref')) {
+      const mainBranch = await getMainBranch(cwd);
+      await pushRepositoryChanges(cwd, mainBranch);
+    }
+
+    throw stderr;
+  }
 }

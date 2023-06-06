@@ -1,7 +1,9 @@
-import { Command } from 'cliffy';
+import { colors, Command, Select } from 'cliffy';
+import { join } from 'std/path';
 import { ghNoReplyCheck, promptAllInputs, validate } from 'lib';
 import {
   getConfig,
+  getConfigDir,
   getHistory,
   HistoryType,
   setConfig,
@@ -10,14 +12,41 @@ import {
 import {
   AuthorSchema,
   AuthorType,
+  createCommit,
   getCommitsByEmail,
   getGitAuthor,
+  pushRepositoryChanges,
 } from '../git.ts';
+
+import {
+  cloneRepository,
+  getRepositories,
+  pullRepositoryChanges,
+} from '../gh.ts';
+
+const SYNC_REPO_PATH = join(getConfigDir(), 'sync-repo');
 
 export default new Command()
   .description('Synchronize commits from local repositories to GitHub profile.')
   .action(async () => {
-    const config = await getConfig();
+    let config = await getConfig();
+
+    if (!config.syncRepo) {
+      const repos = await getRepositories();
+
+      const id = await Select.prompt({
+        message: 'Choose a repository to sync commits to:',
+        hint:
+          'Use arrow keys for navigation, space to select, and enter to submit. If you don\'t have a repository yet, create one and start again.',
+        options: repos.map((repo) => ({ value: repo.id, name: repo.name })),
+      });
+      const selectedRepo = repos.find((repo) => repo.id === id);
+      await cloneRepository(selectedRepo!, 'sync-repo', getConfigDir());
+      await setConfig({ syncRepo: selectedRepo });
+      config = await getConfig();
+    } else {
+      await pullRepositoryChanges(SYNC_REPO_PATH);
+    }
 
     if (!config.author) {
       const currentGitAuthor = await getGitAuthor();
@@ -36,7 +65,8 @@ export default new Command()
       ghNoReplyCheck(email);
 
       const author: AuthorType = { name, email };
-      setConfig({ author });
+      await setConfig({ author });
+      config = await getConfig();
     }
 
     const currentHistory = await getHistory();
@@ -56,5 +86,34 @@ export default new Command()
       }
     }
 
-    setHistory(history);
+    const flatCommits = Object.values(history).flatMap((repo) =>
+      Object.values(repo).flatMap((commits) => commits)
+    );
+
+    if (!flatCommits.length) {
+      console.log('No new commits to synchronize. Exiting...');
+      Deno.exit(0);
+    }
+
+    console.log(
+      '\xa0🔍',
+      colors.yellow(`Synchronizing new ${flatCommits.length} commits...`),
+    );
+
+    flatCommits.forEach((commit) => {
+      createCommit(
+        { ...commit, author: config.author! },
+        SYNC_REPO_PATH,
+      );
+    });
+
+    await setHistory(history);
+    await pushRepositoryChanges(SYNC_REPO_PATH);
+
+    console.log(
+      '\xa0🎉',
+      colors.green(
+        'All changes has been synchronized and pushed to your synching repository!',
+      ),
+    );
   });

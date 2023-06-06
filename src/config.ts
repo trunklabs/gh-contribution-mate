@@ -4,6 +4,7 @@ import { default as dir } from 'dir';
 import { is, mergeDeepRight, mergeWith, sort, uniqWith } from 'rambda';
 import { ensurePath, exists } from 'lib';
 import { AuthorSchema, CommitSchema } from './git.ts';
+import { RepositorySchema } from './gh.ts';
 
 const RepoSchema = z.object({
   dir: z.string(),
@@ -11,14 +12,15 @@ const RepoSchema = z.object({
 });
 const ConfigSchema = z.object({
   author: AuthorSchema.optional(),
+  syncRepo: RepositorySchema.optional(),
   repos: z.record(RepoSchema),
 });
 const HistorySchema = z.record(
   z.record(
     z.array(
-      CommitSchema.optional(),
-    ).optional(),
-  ).optional(),
+      CommitSchema,
+    ),
+  ),
 );
 
 export type RepoType = z.infer<typeof RepoSchema>;
@@ -31,7 +33,7 @@ function createDefaultConfig(): ConfigType {
   };
 }
 
-function getConfigDir(): string {
+export function getConfigDir(): string {
   const base = 'contribution-mate';
 
   /**
@@ -59,11 +61,10 @@ async function ensureConfigFile(): Promise<void> {
   await ensurePath(getConfigDir());
   const configPath = getConfigPath();
   const configExists = await exists(configPath);
-  const defaultConfig = createDefaultConfig();
   if (!configExists) {
     await Deno.writeTextFile(
       configPath,
-      JSON.stringify(defaultConfig, null, 2),
+      JSON.stringify(createDefaultConfig(), null, 2),
     );
   }
 }
