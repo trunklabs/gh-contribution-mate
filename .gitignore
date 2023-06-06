@@ -2,6 +2,3 @@
 .vscode
 dist
 .DS_Store
-
-# TODO: Remove after merge
-old-src/
