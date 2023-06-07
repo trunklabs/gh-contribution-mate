@@ -1,30 +1,17 @@
-import { ansi, colors, Command } from 'cliffy';
-import { EOL } from 'std/fs';
+import { Command } from 'cliffy';
 import { VERSION } from 'version';
-import { config } from 'commands/config';
+import add from './commands/add.ts';
+import sync from './commands/sync.ts';
 
 await new Command()
   .name('contribution-mate')
   .version(VERSION)
   .description(
-    'Sync your contributions from non-GitHub repos to your GitHub profile without revealing the source code or commit messages.',
-  )
-  .meta(
-    'Create an alias',
-    `
-    ${EOL.LF}\xa0\xa0To create a short alias for contribution-mate, you can use ${
-      ansi.link(
-        colors.blue('GitHub CLI Aliases'),
-        'https://cli.github.com/manual/gh_alias',
-      )
-    }.
-
-  For example:
-  gh alias set cm 'contribution-mate'
-  gh cm --help`,
+    'Synchronize your contributions from local repositories to your GitHub profile without revealing the source code or commit messages.',
   )
   .action(function (this: Command) {
     this.showHelp();
   })
-  .command(config.getName(), config)
+  .command('add', add)
+  .command('sync', sync)
   .parse(Deno.args);

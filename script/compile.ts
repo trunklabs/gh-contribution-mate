@@ -1,10 +1,10 @@
 import { join } from 'https://deno.land/std@0.167.0/path/mod.ts';
 
-const [version] = Deno.args;
+import { VERSION } from '../version.ts';
 
-if (!version) {
+if (!VERSION) {
   console.error(
-    `[%cERROR%c] Incorrect version. %cExpected%c format "v*.*.*", %creceived%c "${version}"`,
+    `[%cERROR%c] Incorrect version. %cExpected%c format "v*.*.*", %creceived%c "${VERSION}"`,
     'color: red',
     'color: inherit',
     'color: green',
@@ -79,26 +79,29 @@ for (const { platform, arch } of targets) {
     continue;
   }
 
-  const filename = `gh-contribution-mate_${platform}-${arch}`;
+  const filename = `gh-contribution-mate_v${VERSION}_${platform}-${arch}`;
 
-  const { success, code } = await Deno.run({
-    cmd: [
-      'deno',
+  const cmd = new Deno.Command('deno', {
+    args: [
       'compile',
+      '--allow-run=gh,git',
+      '--allow-read',
+      '--allow-write',
+      `--allow-env=${
+        platform === Platform.WINDOWS ? 'APPDATA' : 'XDG_CONFIG_HOME,HOME'
+      }}`,
       '-o',
       join(outDir, filename),
       '--target',
       denoSupportedTarget,
       'src/main.ts',
     ],
-  }).status();
+  });
 
-  if (!success) {
-    console.error(
-      `[%cERROR%c] Compilation of "${filename}" failed, status code: ${code}`,
-      'color: red',
-      'color: inherit',
-    );
-    Deno.exit(code);
+  const cmdOutput = await cmd.output();
+
+  if (cmdOutput.code !== 0) {
+    console.error(new TextDecoder().decode(cmdOutput.stderr));
+    Deno.exit(cmdOutput.code);
   }
 }

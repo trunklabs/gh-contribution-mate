@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-deno task compile "$@"
+deno run --allow-run=deno script/compile.ts "$@"
