@@ -1,9 +1,9 @@
 import { z } from 'zod';
 import { join } from 'std/path';
 import { default as dir } from 'dir';
-import { is, mergeDeepRight, mergeWith, sort, uniqWith } from 'rambda';
+import { mergeDeepRight } from 'rambda';
 import { ensurePath, exists } from 'lib';
-import { AuthorSchema, CommitSchema } from './git.ts';
+import { AuthorSchema } from './git.ts';
 import { RepositorySchema } from './gh.ts';
 
 const RepoSchema = z.object({
@@ -15,17 +15,9 @@ const ConfigSchema = z.object({
   syncRepo: RepositorySchema.optional(),
   repos: z.record(RepoSchema),
 });
-const HistorySchema = z.record(
-  z.record(
-    z.array(
-      CommitSchema,
-    ),
-  ),
-);
 
 export type RepoType = z.infer<typeof RepoSchema>;
 export type ConfigType = z.infer<typeof ConfigSchema>;
-export type HistoryType = z.infer<typeof HistorySchema>;
 
 function createDefaultConfig(): ConfigType {
   return {
@@ -53,10 +45,6 @@ function getConfigPath(): string {
   return join(getConfigDir(), 'config.json');
 }
 
-function getHistoryPath(): string {
-  return join(getConfigDir(), 'history.json');
-}
-
 async function ensureConfigFile(): Promise<void> {
   await ensurePath(getConfigDir());
   const configPath = getConfigPath();
@@ -65,18 +53,6 @@ async function ensureConfigFile(): Promise<void> {
     await Deno.writeTextFile(
       configPath,
       JSON.stringify(createDefaultConfig(), null, 2),
-    );
-  }
-}
-
-async function ensureHistoryFile(): Promise<void> {
-  await ensurePath(getConfigDir());
-  const historyPath = getHistoryPath();
-  const historyExists = await exists(historyPath);
-  if (!historyExists) {
-    await Deno.writeTextFile(
-      historyPath,
-      JSON.stringify({}, null, 2),
     );
   }
 }
@@ -105,50 +81,4 @@ export async function setConfig(
   );
 
   return mergedConfig;
-}
-
-export async function getHistory(): Promise<HistoryType> {
-  await ensureHistoryFile();
-  const historyPath = getHistoryPath();
-
-  const obj: unknown = JSON.parse(await Deno.readTextFile(historyPath));
-  return HistorySchema.parse(obj);
-}
-
-export async function setHistory(
-  history: Partial<HistoryType>,
-): Promise<HistoryType> {
-  const currentHistory = await getHistory();
-
-  const customizer = (a: unknown, b: unknown): unknown => {
-    if (Array.isArray(a) && Array.isArray(b)) {
-      const combinedCommits = a.concat(b);
-      const uniqueCommits = uniqWith((x, y) => {
-        return x.hash === y.hash && x.timestamp === y.timestamp;
-      }, combinedCommits);
-      return sort(
-        (commitA, commitB) => commitB.timestamp - commitA.timestamp,
-        uniqueCommits,
-      );
-    }
-
-    if (is(Object, a) && is(Object, b)) {
-      return mergeWith(customizer, a, b);
-    }
-
-    return b;
-  };
-
-  const mergedHistory = mergeWith<HistoryType>(
-    customizer,
-    HistorySchema.parse(currentHistory),
-    HistorySchema.parse(history),
-  );
-
-  await Deno.writeTextFile(
-    getHistoryPath(),
-    JSON.stringify(mergedHistory, null, 2),
-  );
-
-  return mergedHistory;
 }
