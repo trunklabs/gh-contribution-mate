@@ -1,20 +1,14 @@
 import { colors, Command, Select } from 'cliffy';
 import { join } from 'std/path';
 import { ghNoReplyCheck, promptAllInputs, validate } from 'lib';
-import {
-  getConfig,
-  getConfigDir,
-  getHistory,
-  HistoryType,
-  setConfig,
-  setHistory,
-} from '../config.ts';
+import { getConfig, getConfigDir, setConfig } from '../config.ts';
 import {
   AuthorSchema,
   AuthorType,
   createCommit,
   getCommitsByEmail,
   getGitAuthor,
+  getGitHistory,
   pushRepositoryChanges,
 } from '../git.ts';
 
@@ -69,45 +63,37 @@ export default new Command()
       config = await getConfig();
     }
 
-    const currentHistory = await getHistory();
-    const history: HistoryType = {};
-
-    for (const [name, repo] of Object.entries(config.repos)) {
-      history[name] = {};
-
-      for (const author of repo.authors) {
-        const commitsByEmail = await getCommitsByEmail(author.email, repo.dir);
-
-        history[name]![author.email] = commitsByEmail.filter((commit) =>
-          !currentHistory[name]?.[author.email]?.some((entry) =>
-            entry?.hash === commit.hash
-          )
-        );
-      }
-    }
-
-    const flatCommits = Object.values(history).flatMap((repo) =>
-      Object.values(repo).flatMap((commits) => commits)
+    const history = await getGitHistory(SYNC_REPO_PATH);
+    const authorsWithDirs: Array<AuthorType & { dir: string }> = Object.values(
+      config.repos,
+    ).flatMap((repo) =>
+      repo.authors.map((author) => ({ ...author, dir: repo.dir }))
+    );
+    const commits = (await Promise.all(
+      authorsWithDirs.map((author) =>
+        getCommitsByEmail(author.email, author.dir)
+      ),
+    )).flat().filter((commit) =>
+      !history.some((entry) => entry?.hash === commit.hash)
     );
 
-    if (!flatCommits.length) {
+    if (!commits.length) {
       console.log('No new commits to synchronize. Exiting...');
       Deno.exit(0);
     }
 
     console.log(
       '\xa0🔍',
-      colors.yellow(`Synchronizing new ${flatCommits.length} commits...`),
+      colors.yellow(`Synchronizing new ${commits.length} commits...`),
     );
 
-    flatCommits.forEach((commit) => {
+    commits.forEach((commit) => {
       createCommit(
         { ...commit, author: config.author! },
         SYNC_REPO_PATH,
       );
     });
 
-    await setHistory(history);
     await pushRepositoryChanges(SYNC_REPO_PATH);
 
     console.log(

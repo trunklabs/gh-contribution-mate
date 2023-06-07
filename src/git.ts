@@ -172,3 +172,24 @@ export async function pushRepositoryChanges(
     throw stderr;
   }
 }
+
+/**
+ * Will return git history where the hash is the original commit's hash.
+ */
+export async function getGitHistory(cwd: string): Promise<CommitType[]> {
+  const cmd = new Deno.Command('git', {
+    args: ['log', '--pretty=format:%s|%cd', '--date=format-local:%s'],
+    cwd,
+  });
+
+  const cmdOutput = await cmd.output();
+
+  if (cmdOutput.code !== 0) throw new TextDecoder().decode(cmdOutput.stderr);
+
+  return new TextDecoder().decode(await cmdOutput.stdout).trim().split(
+    '\n',
+  ).map((line) => {
+    const [hash, timestamp] = line.split('|');
+    return { hash, timestamp: parseInt(timestamp) };
+  });
+}
