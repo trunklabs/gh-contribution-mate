@@ -1,6 +1,6 @@
 # GitHub Contribution Mate (gh-contribution-mate)
 
-[![release](https://github.com/trunklabs/gh-contribution-mate/actions/workflows/release.yml/badge.svg?branch=main)](https://github.com/trunklabs/gh-contribution-mate/actions/workflows/release.yml)
+[![release](https://github.com/trunklabs/gh-contribution-mate/actions/workflows/release.yml/badge.svg)](https://github.com/trunklabs/gh-contribution-mate/actions/workflows/release.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 `gh-contribution-mate` is a GitHub CLI extension that allows developers to
