@@ -20,11 +20,7 @@
     }
   },
   "fmt": {
-    "files": {
+    "singleQuote": true,
       "exclude": ["dist"]
-    },
-    "options": {
-      "singleQuote": true
-    }
   }
 }
