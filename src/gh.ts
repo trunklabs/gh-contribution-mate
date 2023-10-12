@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { logger } from 'lib';
 
 export const RepositorySchema = z.object({
   id: z.string().trim(),
@@ -59,6 +60,7 @@ export async function pullRepositoryChanges(
 
     if (cmdOutput.code !== 0) throw new TextDecoder().decode(cmdOutput.stderr);
   } catch (err) {
+    logger.error('Pulling repository changes failed:', err);
     // with a clean repo there are no changes to pull yet
     if (typeof err != 'string' || !err.includes('invalid refspec')) throw err;
   }

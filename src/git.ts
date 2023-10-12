@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { logger } from 'lib';
 
 export const AuthorSchema = z.object({
   name: z.string().min(1).trim(),
@@ -75,7 +76,8 @@ export async function getGitAuthor(): Promise<AuthorType | undefined> {
 
   try {
     return AuthorSchema.parse({ name, email });
-  } catch (_) { // todo: debugger
+  } catch (err) {
+    logger.error('Failed to parse git author:', err);
     return;
   }
 }

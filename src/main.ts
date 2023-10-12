@@ -12,6 +12,7 @@ await new Command()
   .action(function (this: Command) {
     this.showHelp();
   })
+  .option('-d, --debug', 'Enable debug output.', { global: true })
   .command('add', add)
   .command('sync', sync)
   .parse(Deno.args);

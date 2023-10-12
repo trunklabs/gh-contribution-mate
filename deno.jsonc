@@ -7,6 +7,7 @@
     "zod": "https://deno.land/x/zod@v3.20.1/mod.ts",
     "rambda": "https://mckgnjtrq3abdh6fhic5ddwopjdoxtpu2vvkyphhzwui4egizoma.arweave.net/YJRmpnGGwBGfxToF0Y7OekbrzfTVaqw8582ojhDIy5g/mod.ts",
     "memoizy": "https://deno.land/x/memoizy@1.0.0/mod.ts",
+    "logger": "https://deno.land/x/logger@v1.1.1/logger.ts",
     "version": "./version.ts",
     "commands/config": "./src/commands/config/mod.ts",
     "models/repository": "./src/models/repository/mod.ts",
@@ -20,11 +21,7 @@
     }
   },
   "fmt": {
-    "files": {
-      "exclude": ["dist"]
-    },
-    "options": {
-      "singleQuote": true
-    }
+    "singleQuote": true,
+    "exclude": ["dist"]
   }
 }
