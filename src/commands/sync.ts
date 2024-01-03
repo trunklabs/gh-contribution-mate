@@ -37,7 +37,7 @@ export default new Command()
       const id = await Select.prompt({
         message: 'Choose a repository to sync commits to:',
         hint:
-          'Use arrow keys for navigation, space to select, and enter to submit. If you don\'t have a repository yet, create one and start again.',
+          "Use arrow keys for navigation, space to select, and enter to submit. If you don't have a repository yet, create one and start again.",
         options: repos.map((repo) => ({ value: repo.id, name: repo.name })),
       });
       const selectedRepo = repos.find((repo) => repo.id === id);
