@@ -1,6 +1,6 @@
 import { join } from 'https://deno.land/std@0.167.0/path/mod.ts';
 
-import { VERSION } from '../version.ts';
+import { VERSION } from 'version';
 
 if (!VERSION) {
   console.error(
