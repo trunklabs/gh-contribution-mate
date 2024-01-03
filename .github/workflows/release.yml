@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: denoland/setup-deno@v1
         with:
-          deno-version: v1.37.x
+          deno-version: v1.39.x
       - uses: actions/checkout@v3
       - uses: cli/gh-extension-precompile@v1
         with:
