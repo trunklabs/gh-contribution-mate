@@ -27,7 +27,7 @@ it is advised to consult with your company or IT department before use.
 Make sure you have the necessary dependencies installed on your system:
 
 1. [GitHub CLI](https://cli.github.com/) - You'll need to be logged in. You can
-   check if you're logged in by using `gh auth status`.
+   check if you're logged in by using `gh auth status`
 2. [Git](https://git-scm.com/downloads)
 
 Once the dependencies are in place, you can install the extension as follows:
