@@ -1,7 +1,0 @@
-scripts:
-  dev:
-    desc: Start the development mode
-    cmd: deno run --allow-read --allow-write --allow-env --allow-run src/main.ts
-  compile:
-    desc: Compile the project to a single executable
-    cmd: deno run --allow-run=deno script/compile.ts
