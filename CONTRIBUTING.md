@@ -13,16 +13,8 @@
 1. Install Deno following the [official documentation][deno-install] if not
    installed.
 2. Run `deno cache --reload --lock=deno.lock src/main.ts` to cache dependencies.
-3. Install Velociraptor following the [official documentation][vr-install] if
-   not installed.
-4. Optionally setup your editor/IDE following the
+3. Optionally setup your editor/IDE following the
    [official documentation][deno-env].
-
-To view all available scripts:
-
-```bash
-vr
-```
 
 ## Submitting a Pull Request (PR)
 
@@ -72,4 +64,3 @@ To release a new version the RC (release coordinator) should:
 [conventional-commits]: https://www.conventionalcommits.org/en/v1.0.0/
 [commitlint]: https://github.com/conventional-changelog/commitlint
 [commitlint-config-conventional]: https://github.com/conventional-changelog/commitlint/tree/master/%40commitlint/config-conventional
-[vr-install]: https://velociraptor.run/docs/installation/
