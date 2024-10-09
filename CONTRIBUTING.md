@@ -16,7 +16,6 @@
 3. Optionally setup your editor/IDE following the
    [official documentation][deno-env].
 
-
 ## Submitting a Pull Request (PR)
 
 Before you submit your Pull Request (PR) consider the following guidelines:
